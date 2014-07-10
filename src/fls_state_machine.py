@@ -24,39 +24,39 @@ def setup_state_machine():
             transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA', 'failure': 'HOME_POSITION'})
 
         smach.StateMachine.add('MOVE_TO_GRASP_POINT',
-            start(),
+            MoveToGraspPoint(),
             transitions={'success':'GRASP_BLOCK', 'failure': 'MOVE_TO_RETRACTION_STAGING_AREA'})
 
         smach.StateMachine.add('GRASP_BLOCK',
-            start(),
+            GraspBlock(),
             transitions={'success':'CHECK_GRASP'})
 
         smach.StateMachine.add('CHECK_GRASP',
-            start(),
+            CheckGrasp(),
             transitions={'success':'RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'})
 
         smach.StateMachine.add('RELEASE_GRIPPERS_NO_BLOCK',
-            start(),
+            ReleaseGrippersNoBlock(),
             transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'})
 
         smach.StateMachine.add('RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK',
-            start(),
+            ReturnToRetractionStagingAreaWithBlock(),
             transitions={'success':'MOVE_TO_DROP_OFF_STAGING_AREA', 'failure': 'ABORT'})
 
         smach.StateMachine.add('MOVE_TO_DROP_OFF_STAGING_AREA',
-            start(),
+            MoveToDropOffStagingArea(),
             transitions={'success':'MOVE_TO_DROP_OFF_POINT', 'failure': 'ABORT'})
 
         smach.StateMachine.add('MOVE_TO_DROP_OFF_POINT',
-            start(),
+            MoveToDropOffPoint(),
             transitions={'success':'RELEASE_GRIPPERS', 'failure': 'ABORT'})
 
         smach.StateMachine.add('RELEASE_GRIPPERS',
-            start(),
+            ReleaseGripper(),
             transitions={'success':'CHECK_DROP_OFF', 'failure': 'RELEASE_GRIPPERS'})
 
         smach.StateMachine.add('CHECK_DROP_OFF',
-            start(),
+            CheckDropOff(),
             transitions={'success':'SUCCESS', 'failure': 'ABORT'})
 
     state_machine.execute()

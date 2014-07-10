@@ -67,11 +67,6 @@ class ReturnToRetractionStagingAreaWithBlock(StateTestClass):
         super(self.__class__, self).__init__()
         smach.State.__init__(self, outcomes=['success', 'failure'])
 
-class Abort(StateTestClass):
-    def __init__(self):
-        super(self.__class__, self).__init__()
-        smach.State.__init__(self)
-
 class MoveToDropOffStagingArea(StateTestClass):
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -87,7 +82,7 @@ class ReleaseGripper(StateTestClass):
         super(self.__class__, self).__init__()
         smach.State.__init__(self, outcomes=['success', 'failure'])
 
-class Success(StateTestClass):
+class CheckDropOff(StateTestClass):
     def __init__(self):
         super(self.__class__, self).__init__()
-        smach.State.__init__(self)
+        smach.State.__init__(self, outcomes=['success', 'failure'])
