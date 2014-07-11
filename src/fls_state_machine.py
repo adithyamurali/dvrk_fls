@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Authors: Adithya Murali and Siddarth Sen
 # UC Berkeley, 2014
 
@@ -29,11 +31,11 @@ def setup_state_machine():
 
         smach.StateMachine.add('GRASP_BLOCK',
             GraspBlock(),
-            transitions={'success':'CHECK_GRASP'})
+            transitions={'success':'RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK')
 
         smach.StateMachine.add('CHECK_GRASP',
             CheckGrasp(),
-            transitions={'success':'RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'})
+            transitions={'success':'MOVE_TO_DROP_OFF_STAGING_AREA', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'})
 
         smach.StateMachine.add('RELEASE_GRIPPERS_NO_BLOCK',
             ReleaseGrippersNoBlock(),
@@ -41,7 +43,7 @@ def setup_state_machine():
 
         smach.StateMachine.add('RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK',
             ReturnToRetractionStagingAreaWithBlock(),
-            transitions={'success':'MOVE_TO_DROP_OFF_STAGING_AREA', 'failure': 'ABORT'})
+            transitions={'success':'CHECK_GRASP', 'failure': 'ABORT'})
 
         smach.StateMachine.add('MOVE_TO_DROP_OFF_STAGING_AREA',
             MoveToDropOffStagingArea(),

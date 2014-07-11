@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Authors: Adithya Murali and Siddarth Sen
 # UC Berkeley, 2014
 
