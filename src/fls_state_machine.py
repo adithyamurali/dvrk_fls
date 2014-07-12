@@ -84,14 +84,6 @@ class MasterClass:
         rate = rospy.Rate(1)
         try:
             self.state_machine.execute()
-            #outcome = self.sm.execute(userData)
-            # thread1 = threading.Thread(target=self.sm.execute,args=(userData,))
-            # thread1.daemon = True
-            # thread1.start()
-            
-            # thread2 = threading.Thread(target=self.other_sm.execute,args=(otherUserData,))
-            # thread2.daemon = True
-            # thread2.start()
         except Exception, e:
             print e
 
