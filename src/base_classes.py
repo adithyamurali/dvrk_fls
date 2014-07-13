@@ -13,6 +13,10 @@ from davinci_utils import raven_constants
 from davinci_trajectory.raven_controller import RavenController
 from davinci_trajectory.raven_arm import RavenArm
 
+from geometry_msgs.msg import PoseArray, PoseStamped
+
+import IPython
+
 SLEEP_TIME = 0
 
 class StateTestClass(smach.State):
@@ -31,11 +35,16 @@ class StateTestClass(smach.State):
         # self.dropOffStagingPose = tfx.pose([0.046502262400628255, 0.041261836800885284, -0.12619359834952945],(-0.6808902902461443, 0.7257476567154133, 0.0961062550757443, 0.02103186049601479))
         # self.dropOffPose = tfx.pose([0.046502262400628255, 0.041261836800885284, -0.13119359834952945],(-0.6808902902461443, 0.7257476567154133, 0.0961062550757443, 0.02103186049601479))
 
+
         self.homePose = tfx.pose([0.04062973244319928, 0.0058030822657793475, -0.07932521787553881],(-0.837099978972779, 0.4780810746632525, -0.12685651335638867, 0.2336868337576227))
-        self.retractionStagingPose = tfx.pose([0.06529437744320556, -0.0021532497103947915, -0.09578533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
-        self.graspPoint = tfx.pose([0.06529437744320556, -0.0021532497103947915, -0.10078533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
-        self.dropOffStagingPose = tfx.pose([0.06529437744320556, 0.01784675, -0.09578533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
-        self.dropOffPose = tfx.pose([0.06529437744320556, 0.01784675, -0.10078533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
+        # self.retractionStagingPose = tfx.pose([0.06529437744320556, -0.0021532497103947915, -0.09578533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
+        # self.graspPoint = tfx.pose([0.06529437744320556, -0.0021532497103947915, -0.10078533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
+        # self.dropOffStagingPose = tfx.pose([0.06529437744320556, 0.01784675, -0.09578533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
+        # self.dropOffPose = tfx.pose([0.06529437744320556, 0.01784675, -0.10078533223662396],(-0.7422489178426571, 0.6532677419803014, -0.12280820926518593, 0.08500555856202298))
+        self.retractionStagingPose = None
+        self.graspPoint = None
+        self.dropOffStagingPose = None
+        self.dropOffPose = None
 
     def execute(self, userdata):        
         smach.loginfo(self.__class__.__name__ + " must be subclassed. It does nothing.")
@@ -48,24 +57,80 @@ class StateTestClass(smach.State):
 class Start(StateTestClass):
     def __init__(self, davinciArm):
         super(self.__class__, self).__init__()
-        smach.State.__init__(self, outcomes = ['success'])
+        smach.State.__init__(self, outcomes = ['success'], output_keys = ['retractionStagingPose', 'graspPoint'])
         self.davinciArm = davinciArm
+        self.counter = 0
+        rospy.Subscriber("/triangle_pose_array", PoseArray, self.pose_array_callback)
+
+        self.publisher = rospy.Publisher("/grasp_point_publisher", PoseStamped)
+
+
+    def pose_array_callback(self, msg):
+        if self.counter == 0:
+            poses = tfx.pose(msg)
+            min_x = 9999
+            min_pose = None
+            for pose in poses:
+                if pose.position.x < min_x:
+                    min_x = pose.position.x
+                    min_pose = pose
+                else:
+                    continue
+            self.graspPoint = tfx.pose(min_pose, copy=True)
+            self.graspPoint.position.x = self.graspPoint.position.x - 0.0062
+            self.graspPoint.position.y = self.graspPoint.position.y - 0.003
+            self.graspPoint.position.z += 0.009
+
+            rotation = tfx.transform([0,0,0],tfx.rotation_tb(0,90,0)).matrix
+            rotation2 = tfx.transform([0,0,0],tfx.rotation_tb(-30,0,0)).matrix
+            self.graspPoint = self.graspPoint.as_tf()*rotation
+            self.graspPoint = self.graspPoint.as_tf()*rotation2
+
+            # IPython.embed()
+            # frame = self.graspPoint.frame
+            # self.graspPoint = rotation.matrix*self.graspPoint
+            # self.graspPoint.frame = frame
+
+
+
+
+            self.publisher.publish(self.graspPoint.msg.PoseStamped())
+
+            self.retractionStagingPose = tfx.pose(self.graspPoint, copy=True)
+            self.retractionStagingPose.position.z += 0.025
+            self.counter += 1
+        self.publisher.publish(self.graspPoint.msg.PoseStamped())
 
     def execute(self, userdata):
         print "State: Start"
-        self.davinciArm.executeInterpolatedTrajectory(self.homePose)
+        while True:
+            rospy.sleep(0.1)
+            if (self.graspPoint != None) & (self.retractionStagingPose != None):
+                break
+
+        userdata.retractionStagingPose = self.retractionStagingPose
+        userdata.graspPoint = self.graspPoint
+        # IPython.embed()
+        # self.davinciArm.executeInterpolatedTrajectory(self.homePose)
         return 'success'
 
 class MoveToRetractionStagingArea(StateTestClass):
     def __init__(self, davinciArm):
         super(self.__class__, self).__init__()
-        smach.State.__init__(self, outcomes = ['success', 'failure'])
+        smach.State.__init__(self, outcomes = ['success', 'failure'], input_keys = ['retractionStagingPose'])
         self.davinciArm = davinciArm        
-    
+
     def execute(self, userdata):
         print "State: MoveToRetractionStagingArea"
-        self.davinciArm.setGripperPositionDaVinci(1.000)
-        self.davinciArm.executeInterpolatedTrajectory(self.retractionStagingPose)
+        # self.davinciArm.setGripperPositionDaVinci(1.000)
+        # IPython.embed()
+        print "XXXretractionStagingPose: ", userdata.retractionStagingPose._obj, "XXX"
+
+        rospy.loginfo('Sid is waiting')
+        raw_input()
+        pose = userdata.retractionStagingPose._obj
+        pose.stamp = rospy.Time.now()
+        self.davinciArm.executeInterpolatedTrajectory(raven_util.convertToFrame(pose, '/two_remote_center_link'))
         return 'success'
 
 class HomePosition(StateTestClass):
@@ -81,14 +146,19 @@ class HomePosition(StateTestClass):
 class MoveToGraspPoint(StateTestClass):
     def __init__(self, davinciArm):
         super(self.__class__, self).__init__()
-        smach.State.__init__(self, outcomes = ['success'])
+        smach.State.__init__(self, outcomes = ['success'], input_keys = ['graspPoint'])
         self.davinciArm = davinciArm
     
     def execute(self, userdata):
         print "State: MoveToGraspPoint"
 
         # self.davinciArm.setGripperPositionDaVinci(0.756851)
-        self.davinciArm.executeInterpolatedTrajectory(self.graspPoint)
+        # self.davinciArm.executeInterpolatedTrajectory(self.graspPoint)
+        rospy.loginfo('Sid is waiting again')
+        raw_input()
+        pose = userdata.graspPoint._obj
+        pose.stamp = rospy.Time.now()
+        self.davinciArm.executeInterpolatedTrajectory(raven_util.convertToFrame(pose, '/two_remote_center_link'))
         return 'success'
 
 class GraspBlock(StateTestClass):
@@ -100,11 +170,8 @@ class GraspBlock(StateTestClass):
     def execute(self, userdata):
         print "State: GraspBlock"
 
-        self.davinciArm.setGripperPositionDaVinci(0.30)
-        # startPose = self.davinciArm.ravenController.currentPose
-        # delta = tfx.pose([0.0, 0.0, -0.002])
-        # endPose = raven_util.endPose(startPose, delta)
-        self.davinciArm.executeInterpolatedTrajectory(self.graspPoint)
+        # self.davinciArm.setGripperPositionDaVinci(0.30)
+        # self.davinciArm.executeInterpolatedTrajectory(self.graspPoint)
         return "success"        
 
 class CheckGrasp(StateTestClass):
@@ -135,7 +202,7 @@ class ReturnToRetractionStagingAreaWithBlock(StateTestClass):
 
     def execute(self, userdata):
         print "State: ReturnToRetractionStagingAreaWithBlock"
-        self.davinciArm.executeInterpolatedTrajectory(self.retractionStagingPose)
+        # self.davinciArm.executeInterpolatedTrajectory(self.retractionStagingPose)
         return 'success'
 
 class MoveToDropOffStagingArea(StateTestClass):
@@ -146,7 +213,7 @@ class MoveToDropOffStagingArea(StateTestClass):
 
     def execute(self, userdata):
         print "State: MoveToRetractionStagingArea"
-        self.davinciArm.executeInterpolatedTrajectory(self.dropOffStagingPose)
+        # self.davinciArm.executeInterpolatedTrajectory(self.dropOffStagingPose)
         return 'success'
 
 class MoveToDropOffPoint(StateTestClass):
@@ -157,7 +224,7 @@ class MoveToDropOffPoint(StateTestClass):
 
     def execute(self, userdata):
         print "State: MoveToDropOffPoint"
-        self.davinciArm.executeInterpolatedTrajectory(self.dropOffPose)
+        # self.davinciArm.executeInterpolatedTrajectory(self.dropOffPose)
         return 'success'
 
 class ReleaseGripper(StateTestClass):
@@ -168,11 +235,8 @@ class ReleaseGripper(StateTestClass):
 
     def execute(self, userdata):
         print "State: ReleaseGripper"
-        self.davinciArm.setGripperPositionDaVinci(0.80)
-        # startPose = self.davinciArm.ravenController.currentPose
-        # delta = tfx.pose([0.0, 0.0, 0.005])
-        # endPose = raven_util.endPose(startPose, delta)
-        self.davinciArm.executeInterpolatedTrajectory(self.dropOffPose)
+        # self.davinciArm.setGripperPositionDaVinci(0.80)
+        # self.davinciArm.executeInterpolatedTrajectory(self.dropOffPose)
         return 'success'
 
 class CheckDropOff(StateTestClass):
@@ -183,7 +247,7 @@ class CheckDropOff(StateTestClass):
 
     def execute(self, userdata):
         print "State: CheckDropOff"
-        self.davinciArm.executeInterpolatedTrajectory(self.homePose)
+        # self.davinciArm.executeInterpolatedTrajectory(self.homePose)
         self.davinciArm.stop()        
         return 'success'
 

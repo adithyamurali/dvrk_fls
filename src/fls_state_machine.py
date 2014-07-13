@@ -29,11 +29,11 @@ class MasterClass:
         with self.state_machine:
             smach.StateMachine.add('START',
                 Start(self.davinciArm),
-                transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA'})
+                transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA'}, remapping ={'retractionStagingPose':'sm_data1', 'graspPoint':'sm_data2'} )
 
             smach.StateMachine.add('MOVE_TO_RETRACTION_STAGING_AREA',
                 MoveToRetractionStagingArea(self.davinciArm),
-                transitions={'success':'MOVE_TO_GRASP_POINT', 'failure': 'HOME_POSITION'})
+                transitions={'success':'MOVE_TO_GRASP_POINT', 'failure': 'HOME_POSITION'}, remapping = {'retractionStagingPose':'sm_data1'})
 
             smach.StateMachine.add('HOME_POSITION',
                 HomePosition(self.davinciArm),
@@ -41,7 +41,7 @@ class MasterClass:
 
             smach.StateMachine.add('MOVE_TO_GRASP_POINT',
                 MoveToGraspPoint(self.davinciArm),
-                transitions={'success':'GRASP_BLOCK'})
+                transitions={'success':'GRASP_BLOCK'}, remapping = {'graspPoint': 'sm_data2'})
 
             smach.StateMachine.add('GRASP_BLOCK',
                 GraspBlock(self.davinciArm),
