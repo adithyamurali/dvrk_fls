@@ -45,7 +45,7 @@ class MasterClass:
 
             smach.StateMachine.add('GRASP_BLOCK',
                 GraspBlock(self.davinciArm),
-                transitions={'success':'RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'})
+                transitions={'success':'RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'}, remapping = {'graspPoint': 'sm_data2'})
 
             smach.StateMachine.add('CHECK_GRASP',
                 CheckGrasp(self.davinciArm),
@@ -57,7 +57,7 @@ class MasterClass:
 
             smach.StateMachine.add('RETURN_TO_RETRACTION_STAGING_AREA_WITH_BLOCK',
                 ReturnToRetractionStagingAreaWithBlock(self.davinciArm),
-                transitions={'success':'CHECK_GRASP', 'failure': 'ABORT'})
+                transitions={'success':'CHECK_GRASP', 'failure': 'ABORT'}, remapping = {'retractionStagingPose':'sm_data1'})
 
             smach.StateMachine.add('MOVE_TO_DROP_OFF_STAGING_AREA',
                 MoveToDropOffStagingArea(self.davinciArm),
