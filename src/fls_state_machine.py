@@ -29,7 +29,7 @@ class MasterClass:
         with self.state_machine:
             smach.StateMachine.add('START',
                 Start(self.davinciArm),
-                transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA'}, remapping ={'retractionStagingPose':'sm_data1', 'graspPoint':'sm_data2'} )
+                transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA'}, remapping ={'retractionStagingPose':'sm_data1', 'graspPoint':'sm_data2', 'dropOffStagingPose': 'sm_data3', 'dropOffPose': 'sm_data4'} )
 
             smach.StateMachine.add('MOVE_TO_RETRACTION_STAGING_AREA',
                 MoveToRetractionStagingArea(self.davinciArm),
@@ -61,15 +61,15 @@ class MasterClass:
 
             smach.StateMachine.add('MOVE_TO_DROP_OFF_STAGING_AREA',
                 MoveToDropOffStagingArea(self.davinciArm),
-                transitions={'success':'MOVE_TO_DROP_OFF_POINT', 'failure': 'ABORT'})
+                transitions={'success':'MOVE_TO_DROP_OFF_POINT', 'failure': 'ABORT'}, remapping = {'dropOffStagingPose': 'sm_data3'})
 
             smach.StateMachine.add('MOVE_TO_DROP_OFF_POINT',
                 MoveToDropOffPoint(self.davinciArm),
-                transitions={'success':'RELEASE_GRIPPERS', 'failure': 'ABORT'})
+                transitions={'success':'RELEASE_GRIPPERS', 'failure': 'ABORT'}, remapping = {'dropOffPose':'sm_data4'})
 
             smach.StateMachine.add('RELEASE_GRIPPERS',
                 ReleaseGripper(self.davinciArm),
-                transitions={'success':'CHECK_DROP_OFF', 'failure': 'RELEASE_GRIPPERS'})
+                transitions={'success':'CHECK_DROP_OFF', 'failure': 'RELEASE_GRIPPERS'}, remapping = {'dropOffPose':'sm_data4'})
 
             smach.StateMachine.add('CHECK_DROP_OFF',
                 CheckDropOff(self.davinciArm),
