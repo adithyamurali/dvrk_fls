@@ -80,10 +80,11 @@ class Start(StateTestClass):
 
             self.graspPoint = raven_util.convertToFrame(self.graspPoint, '/two_remote_center_link')
             self.graspPoint.position.x = self.graspPoint.position.x - 0.0061
-            self.graspPoint.position.y += 0.011
+            self.graspPoint.position.y += 0.013
             self.graspPoint.position.z += 0.013
 
-            rotation = tfx.rotation_tb(0,90,0) * tfx.rotation_tb(-30,0,0) * tfx.rotation_tb(0,0,5)
+            # rotation = tfx.rotation_tb(0,90,0) * tfx.rotation_tb(-30,0,0) * tfx.rotation_tb(0,0,5)
+            rotation = tfx.rotation_tb(0,90,0) * tfx.rotation_tb(-30,0,0)
             self.graspPoint = self.graspPoint.as_tf()*rotation.as_pose()
 
 
@@ -101,8 +102,8 @@ class Start(StateTestClass):
             self.retractionStagingPose.position.z += 0.03
             self.retractionStagingPose.position.x += 0.000
             self.dropOffStagingPose = tfx.pose(self.retractionStagingPose, copy = True)
-            self.dropOffStagingPose.position.y += -0.018
-            self.dropOffStagingPose.position.x += 0.003
+            self.dropOffStagingPose.position.y += 0.01
+            self.dropOffStagingPose.position.x += 0.052
 
             self.dropOffPose = tfx.pose(self.dropOffStagingPose, copy = True)
             self.dropOffPose.position.z += - 0.010
@@ -135,7 +136,7 @@ class MoveToRetractionStagingArea(StateTestClass):
         # self.davinciArm.setGripperPositionDaVinci(1.000)
         # IPython.embed()
         print "XXXretractionStagingPose: ", userdata.retractionStagingPose._obj, "XXX"
-        self.davinciArm.setGripperPositionDaVinci(0.12)
+        self.davinciArm.setGripperPositionDaVinci(0.3)
         pose = userdata.retractionStagingPose._obj
         self.davinciArm.executeInterpolatedTrajectory(pose)
         return 'success'
