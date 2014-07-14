@@ -37,7 +37,7 @@ class MasterClass:
 
             smach.StateMachine.add('HOME_POSITION',
                 HomePosition(self.davinciArm),
-                transitions={'success':'MOVE_TO_RETRACTION_STAGING_AREA', 'failure': 'HOME_POSITION'})
+                transitions={'success':'START', 'failure': 'HOME_POSITION'})
 
             smach.StateMachine.add('MOVE_TO_GRASP_POINT',
                 MoveToGraspPoint(self.davinciArm),
@@ -73,7 +73,7 @@ class MasterClass:
 
             smach.StateMachine.add('CHECK_DROP_OFF',
                 CheckDropOff(self.davinciArm),
-                transitions={'success':'SUCCESS', 'failure': 'ABORT'})
+                transitions={'stillLooping': 'HOME_POSITION', 'success':'SUCCESS', 'failure': 'ABORT'})
 
             smach.StateMachine.add('ABORT', Abort(self.davinciArm), transitions={'failure': 'FAILURE'})
 
