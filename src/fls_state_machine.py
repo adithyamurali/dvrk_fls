@@ -49,7 +49,7 @@ class MasterClass:
 
             smach.StateMachine.add('CHECK_GRASP',
                 CheckGrasp(self.davinciArm),
-                transitions={'success':'MOVE_TO_DROP_OFF_STAGING_AREA', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'})
+                transitions={'success':'MOVE_TO_DROP_OFF_STAGING_AREA', 'failure': 'RELEASE_GRIPPERS_NO_BLOCK'}, remapping = {'graspPoint': 'sm_data2'})
 
             smach.StateMachine.add('RELEASE_GRIPPERS_NO_BLOCK',
                 ReleaseGrippersNoBlock(self.davinciArm),
